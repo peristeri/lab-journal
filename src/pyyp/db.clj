@@ -1,10 +1,10 @@
 (ns pyyp.db
   (:require [next.jdbc :as jdbc]
-            [honeysql.core :as honeysql]
             [next.jdbc.sql :as sql]
             [buddy.hashers :refer [encrypt]]
             [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string :as str])
+  (:import (java.util UUID)))
 
 
 (defn create-tables [db]
@@ -25,12 +25,27 @@
 
 (defn create-account [db-conn {:keys [username password role]}]
   (let [hashed (encrypt  password)
-        data   [[username hashed (java.util.UUID/randomUUID) role]]]
-    (sql/query db-conn
-               (honeysql/format
-                 {:insert-into :account
-                  :columns     [:username :password :id :role]
-                  :values      data}))))
+        values [(UUID/randomUUID) username hashed role]
+        data   (zipmap [:id :username :password :role] values)]
+    (sql/insert! db-conn :account data)))
+
 
 (defn account-by-username [db-conn username]
-  (first (sql/find-by-keys db-conn :account {:username username})))
+  (first (sql/find-by-keys db-conn :account {:username username :is_active true})))
+
+
+(defn verify-account [db-conn username id]
+  (first (sql/find-by-keys db-conn :account {:username username :id id :is_active true})))
+
+
+(defn create-reseach [db-conn {:keys [username specification] :as params}]
+  (let [account       (account-by-username db-conn username)
+        specification (pr-str specification)
+        data          (when account
+                        (-> params
+                            (dissoc :username)
+                            (assoc :id (UUID/randomUUID))
+                            (assoc :leader (:account/id account))
+                            (assoc :specification specification)))]
+    (when data
+      (sql/insert! db-conn :research data))))
