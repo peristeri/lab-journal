@@ -1,3 +1,4 @@
 (ns pyyp.lab-journal-test
   (:require [clojure.test :refer :all]
-            [pyyp.lab-journal :refer :all]))
+            [ring.mock.request :as mock]
+            ))
