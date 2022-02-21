@@ -24,6 +24,19 @@ There's two types of personas a account could have:
 - worker :: The persona has the permission to launch experiments according to
   the specifications
 
+*** Glossary
+
+- exploratory research :: The basis of the research is the specification of the
+  data. The provenance is key in the research, therefore the =source= =version=
+  and =specification= identifies a specific population with a corpus.
+
+  - data_repository :: A base uri where the data can be downloaded
+  - version :: The assumption is that every change to the corpus is captured and
+    tagged. The version tag can be either a date or a UUID.
+  - specification :: The set of filters to apply onto the corpus. It's in the
+    form of a map object (edn for now).
+
+
 ** The work-flow
 
 *** Pre-registration the reseach
