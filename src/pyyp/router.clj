@@ -6,7 +6,7 @@
             [reitit.dev.pretty :as pretty]
             [reitit.ring :as ring]
             [reitit.ring.coercion :as coercion]
-            [ring.middleware.params :refer [wrap-params]]
+            [reitit.ring.middleware.parameters :as parameters]
             [reitit.ring.middleware.muuntaja :refer [format-middleware]]
             [muuntaja.core :as muuntaja]
             [malli.util]
@@ -48,12 +48,10 @@
 
    :exception pretty/exception
    :data      {:env        {:db db-conn :jwt-secret jwt-secret}
-               :coercion   (reitit.coercion.malli/create
-                             {:compile malli.util/closed-schema
-                              })
+               :coercion   (reitit.coercion.malli/create reitit.coercion.malli/default-options)
                :muuntaja   muuntaja/instance
                :middleware [
-                            wrap-params
+                            parameters/parameters-middleware
                             format-middleware
                             [wrap-authentication (jws {:secret jwt-secret :token-name "Bearer"})]
                             [wrap-authorization (jws {:secret jwt-secret})]
@@ -74,13 +72,13 @@
      ["/login" {:post       {:handler handlers/login}
                 :parameters {:body {:username string? :password string?}}}]
      ["/api" {:middleware [wrap-check-authorization]}
-      ["/research" {:put     {:handler handlers/create-research}
-                    :handler {:body
-                              {:username      string?
-                               :title         string?
-                               :specification string?
-                               :source        string?
-                               :version       string?}}}]]]
+      ["/research" {:put        {:handler handlers/create-research}
+                    :parameters {:body
+                                 [:map
+                                  [:leader          string?]
+                                  [:title           string?]
+                                  [:data_repository string?]
+                                  [:version         string?]]}}]]]
     options
     ))
 

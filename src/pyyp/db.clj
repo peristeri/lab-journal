@@ -38,14 +38,9 @@
   (first (sql/find-by-keys db-conn :account {:username username :id id :is_active true})))
 
 
-(defn create-reseach [db-conn {:keys [username specification] :as params}]
-  (let [account       (account-by-username db-conn username)
-        specification (pr-str specification)
-        data          (when account
-                        (-> params
-                            (dissoc :username)
-                            (assoc :id (UUID/randomUUID))
-                            (assoc :leader (:account/id account))
-                            (assoc :specification specification)))]
+(defn create-reseach-by-leader-id [db-conn {:keys [specification] :as params}]
+  (let [data (-> params
+                 (assoc :id            (UUID/randomUUID)
+                        :specification (pr-str specification)))]
     (when data
       (sql/insert! db-conn :research data))))

@@ -20,19 +20,17 @@
                                       (account->response account jwt-secret))]
     (if response
       {:status 200 :body response}
-      {:status 403 :body "Invalid authentication"}
-      )
-    )
-  )
+      {:status 403 :body "Invalid authentication"})))
 
-(defn create-research [{:keys [db identity body-params] :as request}]
-  (let [username    (:account/username identity)
-        user-id     (:account/id identity)
-        account     (db/verify-account db username user-id)
-        new-reseach (assoc body-params :username username)
-        response    (when account (db/create-reseach db new-reseach))
-        ]
+(defn create-research [{:keys [db body-params]}]
+  (let [leader   (->> body-params
+                      :leader
+                      (db/account-by-username db)
+                      :account/id)
+        request  (when leader
+                   (assoc body-params :leader leader))
+        response (when request
+                   (db/create-reseach-by-leader-id db request))]
     (if response
       {:status 200 :body {:status "success" :research-id (:id response)}}
-      {:status 400 :body {:status "failed" :reason "Invalid research"}})
-    ))
+      {:status 400 :body {:status "failed" :reason "Invalid research"}})))
