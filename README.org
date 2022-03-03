@@ -30,16 +30,19 @@ There's two types of personas a account could have:
   data. The provenance is key in the research, therefore the =source= =version=
   and =specification= identifies a specific population with a corpus.
 
-  - data_repository :: A base uri where the data can be downloaded
+  - data repository :: The base uri where the data can be downloaded
   - version :: The assumption is that every change to the corpus is captured and
     tagged. The version tag can be either a date or a UUID.
   - specification :: The set of filters to apply onto the corpus. It's in the
     form of a map object (edn for now).
+  - application repository :: The research application git uri.
 
 
 ** The work-flow
 
-*** Pre-registration the reseach
+*** Pre-registration the research
 
-Initialization of the research in the system. The researcher enters the title,
-hypothesis and the application repository.
+The researcher initializes a research project (pre-registering a project) by
+first entering the basic description of the research the title, hypothesis and
+the application repository. The registration of the research will trigger a
+background process of preparing the data-sets.

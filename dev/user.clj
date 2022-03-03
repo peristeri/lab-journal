@@ -5,6 +5,8 @@
             [pyyp.db :as db]
             [clj-http.client :as client]
             [cheshire.core :as cheshire]
+            [clojure.core.async :as async]
+            [clojure.string :as string]
             ))
 
 (ig-repl/set-prep! (fn [] config/config))
@@ -71,3 +73,46 @@
 
   (def application (ig-state/system :backend/application))
   )
+
+
+(let [n     1000
+      cs    (repeatedly n async/chan)
+      begin (System/currentTimeMillis)]
+  (doseq [c cs] (async/put! c "hi"))
+  (dotimes [_ n]
+    (let [[v _] (async/alts!! cs)]
+      (assert (= "hi" v))))
+  (println "Read" n "msgs in" (- (System/currentTimeMillis) begin) "ms"))
+
+
+(defn printer [in]
+  (async/go-loop []
+    (when-let [msg (async/<! in)]
+      (println msg)
+      (recur))))
+
+(defn upper-caser [in]
+  (let [out (async/chan)]
+    (async/go-loop []
+      (if-let [msg (async/<! in)]
+        (do
+          (async/>! out (string/reverse msg))
+          (recur))
+        (async/close! out)))))
+
+
+(defn reverser [in]
+  (let [out (async/chan)]
+    (async/go-loop []
+      (if-let [msg (async/<! in)]
+        (do
+          (async/>! out (string/upper-case msg))
+          (recur))
+        (async/close! out)))))
+
+(def in-chan (async/chan))
+(def out-chan (printer (reverser (upper-caser in-chan))))
+
+(async/>!! in-chan "redrum")
+
+(async/close! in-chan)

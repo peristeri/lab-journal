@@ -19,9 +19,7 @@
    :compile (fn [{:keys [env]} _]
               (fn [handler]
                 (fn [request]
-                  (handler (-> request
-                               (assoc :db (:db env))
-                               (assoc :jwt-secret (:jwt-secret env)))))))})
+                  (handler (merge request (select-keys env [:db :jwt-secret :worker-channel]))))))})
 
 
 (def wrap-check-authorization
@@ -35,35 +33,27 @@
                      account  (db/verify-account db username id)]
                  (if account
                    (handler request)
-                   (throw-unauthorized)
-                   )
-                 )
-               (throw-unauthorized)
-               ))
-           )})
+                   (throw-unauthorized)))
+               (throw-unauthorized))))})
 
 
-(defn routes-options [db-conn jwt-secret]
-  {
-
-   :exception pretty/exception
-   :data      {:env        {:db db-conn :jwt-secret jwt-secret}
-               :coercion   (reitit.coercion.malli/create reitit.coercion.malli/default-options)
-               :muuntaja   muuntaja/instance
-               :middleware [
-                            parameters/parameters-middleware
-                            format-middleware
-                            [wrap-authentication (jws {:secret jwt-secret :token-name "Bearer"})]
-                            [wrap-authorization (jws {:secret jwt-secret})]
-                            coercion/coerce-exceptions-middleware
-                            coercion/coerce-request-middleware
-                            coercion/coerce-response-middleware
-                            inject-env-middleware
-                            ]}})
+(defn routes-options [db-conn jwt-secret worker-channel]
+{:exception pretty/exception
+ :data      {:env        {:db db-conn :jwt-secret jwt-secret :worker-channel worker-channel}
+             :coercion   (reitit.coercion.malli/create reitit.coercion.malli/default-options)
+             :muuntaja   muuntaja/instance
+             :middleware [parameters/parameters-middleware
+                          format-middleware
+                          [wrap-authentication (jws {:secret jwt-secret :token-name "Bearer"})]
+                          [wrap-authorization (jws {:secret jwt-secret})]
+                          coercion/coerce-exceptions-middleware
+                          coercion/coerce-request-middleware
+                          coercion/coerce-response-middleware
+                          inject-env-middleware]}})
 
 
 (defn placeholder-handler [request]
-  {:status 200 :body (:uri request)})
+{:status 200 :body (:uri request)})
 
 
 (defn routes [options]
@@ -77,14 +67,15 @@
                                  [:map
                                   [:leader          string?]
                                   [:title           string?]
+                                  [:specification   map?]
                                   [:data_repository string?]
                                   [:version         string?]]}}]]]
-    options
-    ))
+    options))
 
-(defn application [db-conn jwt-secret]
-  (ring/ring-handler
-    (routes (routes-options db-conn jwt-secret))
-    (ring/routes
+
+(defn application [db-conn jwt-secret worker-channel]
+(ring/ring-handler
+  (routes (routes-options db-conn jwt-secret worker-channel))
+  (ring/routes
       (ring/create-default-handler)
       (ring/redirect-trailing-slash-handler))))
