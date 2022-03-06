@@ -21,6 +21,7 @@
   :dev {:extra-paths ["dev"]
         :extra-deps  {integrant/repl    {:mvn/version "0.3.2"}
                       cheshire/cheshire {:mvn/version "5.10.2"}
+                      faker/faker       {:mvn/version "0.3.2"}
                       clj-http/clj-http {:mvn/version "3.12.3"}}}
 
   :run-m {:main-opts ["-m" "pyyp.lab-journal"]}

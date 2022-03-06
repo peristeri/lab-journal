@@ -7,27 +7,47 @@
   (:import (java.util UUID)))
 
 
+(def roles ["researcher" "worker"])
+
+
 (defn create-tables [db]
   (try
     (let [tables (-> (io/resource "db/sqlite/init-db.sql")
                      slurp
-                     (str/split #"\n\n")
-                     )]
+                     (str/split #"\n\n"))]
       (jdbc/with-transaction [tx db]
         (for [stmt tables]
           (jdbc/execute! tx [stmt]))))
-
     (catch Exception e (println "Exception: " (ex-message e) (ex-cause e)))))
 
 
-(def roles ["researcher" "worker"])
+(defn- prepare-new-entry [values]
+  (-> values
+      (assoc :id (UUID/randomUUID))))
 
 
-(defn create-account [db-conn {:keys [username password role]}]
-  (let [hashed (encrypt  password)
-        values [(UUID/randomUUID) username hashed role]
-        data   (zipmap [:id :username :password :role] values)]
-    (sql/insert! db-conn :account data)))
+(defn- prepare-new-account [values]
+  (-> values
+      (prepare-new-entry)
+      (assoc :password (encrypt (:password values)))))
+
+(defn- prepare-new-research [values]
+  (-> values
+      (prepare-new-entry)
+      (assoc :specification (pr-str (:specification values)))))
+
+
+(defn create-account! [db-conn values]
+  (let [data (prepare-new-account values)]
+    (sql/insert! db-conn :account data)
+    data))
+
+
+(defn create-research! [db-conn values]
+  (let [data (prepare-new-research values)]
+    (when data
+      (sql/insert! db-conn :research data)
+      data)))
 
 
 (defn account-by-username [db-conn username]
@@ -38,9 +58,12 @@
   (first (sql/find-by-keys db-conn :account {:username username :id id :is_active true})))
 
 
-(defn create-reseach-by-leader-id [db-conn {:keys [specification] :as params}]
-  (let [data (-> params
-                 (assoc :id            (UUID/randomUUID)
-                        :specification (pr-str specification)))]
-    (when data
-      (sql/insert! db-conn :research data))))
+(defn create-dataset! [db-conn values]
+  (let [data (prepare-new-entry values)]
+    (sql/insert! db-conn :dataset data)
+    data))
+
+
+(defn create-images! [db-conn values]
+  (doseq [value values]
+    (sql/insert! db-conn :image (prepare-new-entry value))))
