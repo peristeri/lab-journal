@@ -62,14 +62,16 @@
      ["/login" {:post       {:handler handlers/login}
                 :parameters {:body {:username string? :password string?}}}]
      ["/api" {:middleware [wrap-check-authorization]}
-      ["/research" {:put        {:handler handlers/create-research}
-                    :parameters {:body
-                                 [:map
-                                  [:leader          string?]
-                                  [:title           string?]
-                                  [:specification   map?]
-                                  [:data_repository string?]
-                                  [:version         string?]]}}]]]
+      ["/research" {:put
+                    {:summary    "Create a new research project"
+                     :handler    handlers/create-research
+                     :parameters {:body
+                                  [:map
+                                   [:leader          string?]
+                                   [:title           string?]
+                                   [:specification   map?]
+                                   [:data_repository string?]
+                                   [:version         string?]]}}}]]]
     options))
 
 
