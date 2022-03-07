@@ -40,16 +40,16 @@
                      {:status 200 :body identity}))}}])
 
 
-(defn research-summary [username]
-  username)
+(defn research-summary [user-id]
+  user-id)
 
 (def research-routes
   ["/research"
    {:get
     {:summary "Get summary of all research the current account has"
      :handler (fn [request]
-                (let [username (-> request :identity :username)]
-                  (research-summary username)
+                (let [user-id (-> request :identity :user/id)]
+                  (research-summary user-id)
                   ))}}])
 
 (defn routes [options]
