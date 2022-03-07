@@ -1,17 +1,21 @@
 (ns pyyp.handlers
   (:require [pyyp.db :as db]
             [buddy.hashers :refer [check]]
-            [buddy.sign.jwt :as jwt]))
+            [buddy.sign.jwt :as jwt]
+            [ring.util.response :as response]))
+
 
 (defn authenticated? [account password]
   (when (and account
              (check password (:account/password account)))
     account))
 
+
 (defn account->response [account secret]
   (let [sanitized (dissoc account :account/password)
         token     (jwt/sign sanitized secret)]
     (assoc sanitized :account/token token)))
+
 
 (defn login [{:keys [db body-params jwt-secret]}]
   (let [{:keys [username password]} body-params
@@ -19,8 +23,9 @@
         response                    (when (and account (authenticated? account password))
                                       (account->response account jwt-secret))]
     (if response
-      {:status 200 :body response}
-      {:status 403 :body "Invalid authentication"})))
+      (response/response response)
+      {:status 403 :headers {} :body "Invalid authentication"})))
+
 
 (defn create-research [{:keys [db body-params]}]
   (let [leader   (->> body-params
@@ -30,7 +35,12 @@
         request  (when leader
                    (assoc body-params :leader leader))
         response (when request
-                   (db/create-reseach-by-leader-id db request))]
+                   (db/create-research! db request))]
     (if response
-      {:status 200 :body {:status "success" :research-id (:id response)}}
-      {:status 400 :body {:status "failed" :reason "Invalid research"}})))
+      (response/response {:status "success" :research-id (:id response)})
+      (response/bad-request {:status "failed" :reason "Invalid research"}))))
+
+
+(defn account-history [request]
+  request
+  )
