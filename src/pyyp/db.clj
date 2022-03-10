@@ -67,3 +67,7 @@
 (defn create-images! [db-conn values]
   (doseq [value values]
     (sql/insert! db-conn :image (prepare-new-entry value))))
+
+(defn get-account-data [db-conn user-id]
+  (sql/find-by-keys db-conn :research {:leader user-id})
+  )

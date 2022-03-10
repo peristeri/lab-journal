@@ -28,18 +28,24 @@ create table if not exists dataset (
   name text not null,
   license text not null,
   -- The url where the original dataset description resides
-  url text unique not null,
+  url text not null,
   -- The version of the dataset that is currently in the lab's storage
   version text not null,
   created_at datetime default current_timestamp,
-  is_active boolean default true
+  is_active boolean default true,
+  unique(url, version)
 );
 
 create table if not exists experiment (
   research_id text not null,
   dataset_id text not null,
+  -- A research can have multiple experiments. There's no constraints, we want to record retry also.
+  application_version text not null default "HEAD",
+  results text,
+  status text default "pending",
   foreign key(research_id) references research(id),
-  foreign key(dataset_id) references dataset(id)
+  foreign key(dataset_id) references dataset(id),
+  check(status in ("pending", "in progress", "completed", "failed"))
 );
 
 create table if not exists image (

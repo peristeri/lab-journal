@@ -84,8 +84,9 @@
 
 
 (defn fake-experiment [research dataset]
-  {:research_id (:id research)
-   :dataset_id  (:id dataset)})
+  {:research_id         (:research/id research)
+   :dataset_id          (:dataset/id dataset)
+   :application_version (first (fl/words))})
 
 
 (defn seed-experiments [db-conn num]
@@ -93,3 +94,9 @@
     (for [research researches
           dataset  (sql/query db-conn ["select * from dataset order by random() limit ?" (inc (rand-int 4))])]
       (fake-experiment research dataset))))
+
+(defn seed-db [db]
+  (fixtures/seed-accounts db 5)
+  (fixtures/seed-researches db 50)
+  (fixtures/seed-datasets db 10 300)
+  (fixtures/seed-experiments db 10))
