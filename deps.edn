@@ -19,26 +19,27 @@
 
  :aliases
  {
-  :dev {:extra-paths ["dev"]
-        :extra-deps  {integrant/repl    {:mvn/version "0.3.2"}
-                      cheshire/cheshire {:mvn/version "5.10.2"}
-                      faker/faker       {:mvn/version "0.3.2"}
-                      clj-http/clj-http {:mvn/version "3.12.3"}}}
-
-  :run-m {:main-opts ["-m" "pyyp.lab-journal"]}
-
-  :run-x {:ns-default pyyp.lab-journal
-          :exec-fn    main}
-
-  :build {:deps       {io.github.seancorfield/build-clj
-                       {:git/tag   "v0.7.0" :git/sha "5d2cb60"
-                        ;; since we're building an app uberjar, we do not
-                        ;; need deps-deploy for clojars.org deployment:
-                        :deps/root "slim"}}
-          :ns-default build}
-
-  :test {:extra-paths ["test"]
-         :extra-deps  {org.clojure/test.check {:mvn/version "1.1.1"}
-                       ring/ring-mock         {:mvn/version "0.4.0"}
-                       lambdaisland/kaocha    {:mvn/version "1.63.998"}
-                       }}}}
+  :dev         {:extra-paths ["dev"]
+                :extra-deps  {integrant/repl    {:mvn/version "0.3.2"}
+                              cheshire/cheshire {:mvn/version "5.10.2"}
+                              faker/faker       {:mvn/version "0.3.2"}
+                              clj-http/clj-http {:mvn/version "3.12.3"}}}
+  :run-m       {:main-opts ["-m" "pyyp.lab-journal"]}
+  :run-x       {:ns-default pyyp.lab-journal
+                :exec-fn    main}
+  :build       {:deps       {io.github.seancorfield/build-clj
+                             {:git/tag   "v0.8.0" :git/sha "9bd8b8a"
+                              ;; since we're building an app uberjar, we do not
+                              ;; need deps-deploy for clojars.org deployment:
+                              :deps/root "slim"}}
+                :ns-default build}
+  :frontend    {:extra-deps {org.clojure/clojurescript {:mvn/version "1.11.4"}
+                             reagent/reagent           {:mvn/version "1.1.1"}
+                             re-frame/re-frame         {:mvn/version "1.2.0"}}}
+  :shadow-cljs {:extra-deps {thheller/shadow-cljs {:mvn/version "2.17.8"}
+                             binaryage/devtools   {:mvn/version "1.0.5"}}
+                :main-opts  ["-m" "shadow.cljs.devtools.cli"]}
+  :test        {:extra-paths ["test"]
+                :extra-deps  {org.clojure/test.check {:mvn/version "1.1.1"}
+                              ring/ring-mock         {:mvn/version "0.4.0"}
+                              lambdaisland/kaocha    {:mvn/version "1.63.998"}}}}}
