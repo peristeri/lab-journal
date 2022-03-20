@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+
+    <div id="app"></div>
+<script>
+
+
+function postLogin(event) {
+     var req = new XMLHttpRequest();
+     req.open("POST", "http://localhost:3000/login", false);
+     req.setRequestHeader("Authorization", "Basic " + btoa("researcher:abc123"));
+     req.send();
+     document.cookie = "token=" + JSON.parse(req.response)["account/token"];
+ }
+
+function getToken() {
+     let res;
+     decodeURIComponent(document.cookie).split("; ").forEach(val => {
+         if (val.indexOf("token=") === 0) res = val.substring("token=".length);});
+     return res;
+ }
+
+</script>
+<script src="/js/main.js" type="text/javascript"></script>
+</body>
+</html>

@@ -18,10 +18,10 @@ build:
 
 
 frontend:
-	clojure -M:frontend -m shadow.cljs.devtools.cli watch frontend
+	clojure -M:frontend -m shadow.cljs.devtools.cli compile frontend
 
 
-backend:
+backend-repl:
 	clojure -M:dev:test:repl/cider-refactor
 
 

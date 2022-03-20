@@ -1,45 +1,59 @@
 {
  :paths ["src" "resources"]
 
- :deps {org.clojure/clojure               {:mvn/version "1.10.3"}
-        org.clojure/core.async            {:mvn/version "1.5.648"}
-        metosin/reitit                    {:mvn/version "0.5.16"}
-        metosin/reitit-ring               {:mvn/version "0.5.16"}
-        metosin/reitit-middleware         {:mvn/version "0.5.16"}
-        integrant/integrant               {:mvn/version "0.8.0"}
+ :deps {
+        ;; clojure
+        org.clojure/clojure    {:mvn/version "1.10.3"}
+        org.clojure/core.async {:mvn/version "1.5.648"}
+
+        ;; system management
+        integrant/integrant {:mvn/version "0.8.0"}
+
+        ;; db
         com.github.seancorfield/next.jdbc {:mvn/version "1.2.772"}
         org.xerial/sqlite-jdbc            {:mvn/version "3.36.0.3"}
         honeysql/honeysql                 {:mvn/version "1.0.461"}
-        buddy/buddy-auth                  {:mvn/version "3.0.323"}
-        buddy/buddy-hashers               {:mvn/version "1.8.158"}
-        ring/ring-core                    {:mvn/version "1.9.5"}
-        ring/ring-jetty-adapter           {:mvn/version "1.9.5"}
-        tick/tick                         {:mvn/version "0.4.32"}
+
+        ;; http client
+        ring/ring-core          {:mvn/version "1.9.5"}
+        ring/ring-jetty-adapter {:mvn/version "1.9.5"}
+
+        ;; security
+        buddy/buddy-auth    {:mvn/version "3.0.323"}
+        buddy/buddy-hashers {:mvn/version "1.8.158"}
+
+        ;; routing
+        metosin/reitit            {:mvn/version "0.5.17"}
+        metosin/reitit-ring       {:mvn/version "0.5.17"}
+        metosin/reitit-middleware {:mvn/version "0.5.17"}
+        tick/tick                 {:mvn/version "0.4.32"}
         }
 
  :aliases
  {
-  :dev         {:extra-paths ["dev"]
-                :extra-deps  {integrant/repl    {:mvn/version "0.3.2"}
-                              cheshire/cheshire {:mvn/version "5.10.2"}
-                              faker/faker       {:mvn/version "0.3.2"}
-                              clj-http/clj-http {:mvn/version "3.12.3"}}}
-  :run-m       {:main-opts ["-m" "pyyp.lab-journal"]}
-  :run-x       {:ns-default pyyp.lab-journal
-                :exec-fn    main}
-  :build       {:deps       {io.github.seancorfield/build-clj
-                             {:git/tag   "v0.8.0" :git/sha "9bd8b8a"
-                              ;; since we're building an app uberjar, we do not
-                              ;; need deps-deploy for clojars.org deployment:
-                              :deps/root "slim"}}
-                :ns-default build}
-  :frontend    {:extra-deps {org.clojure/clojurescript {:mvn/version "1.11.4"}
-                             reagent/reagent           {:mvn/version "1.1.1"}
-                             re-frame/re-frame         {:mvn/version "1.2.0"}}}
-  :shadow-cljs {:extra-deps {thheller/shadow-cljs {:mvn/version "2.17.8"}
-                             binaryage/devtools   {:mvn/version "1.0.5"}}
-                :main-opts  ["-m" "shadow.cljs.devtools.cli"]}
-  :test        {:extra-paths ["test"]
-                :extra-deps  {org.clojure/test.check {:mvn/version "1.1.1"}
-                              ring/ring-mock         {:mvn/version "0.4.0"}
-                              lambdaisland/kaocha    {:mvn/version "1.63.998"}}}}}
+  :dev
+  {:extra-paths ["dev"]
+   :extra-deps  {integrant/repl    {:mvn/version "0.3.2"}
+                 cheshire/cheshire {:mvn/version "5.10.2"}
+                 faker/faker       {:mvn/version "0.3.2"}
+                 clj-http/clj-http {:mvn/version "3.12.3"}}}
+  :run-x
+  {:exec-fn pyyp.lab-jounal.system/main}
+  :build
+  {:deps       {io.github.seancorfield/build-clj
+                {:git/tag   "v0.8.0" :git/sha "9bd8b8a"
+                 ;; since we're building an app uberjar, we do not
+                 ;; need deps-deploy for clojars.org deployment:
+                 :deps/root "slim"}}
+   :ns-default build}
+  :frontend
+  {:extra-deps {org.clojure/clojurescript {:mvn/version "1.11.4"}
+                thheller/shadow-cljs      {:mvn/version "2.17.8"}
+                reagent/reagent           {:mvn/version "1.1.1"}
+                re-frame/re-frame         {:mvn/version "1.2.0"}
+                binaryage/devtools        {:mvn/version "1.0.5"}}}
+  :test
+  {:extra-paths ["test"]
+   :extra-deps  {org.clojure/test.check {:mvn/version "1.1.1"}
+                 ring/ring-mock         {:mvn/version "0.4.0"}
+                 lambdaisland/kaocha    {:mvn/version "1.63.998"}}}}}
