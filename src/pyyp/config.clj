@@ -1,11 +1,11 @@
 (ns pyyp.config
-  (:require [integrant.core :as ig]
-            [next.jdbc :as jdbc]
-            [pyyp.router :as router]
-            [ring.adapter.jetty :refer [run-jetty]]
-            [clojure.core.async :as async]
-
-            [pyyp.worker :as worker]))
+  (:require
+   [clojure.core.async :as async]
+   [integrant.core :as ig]
+   [next.jdbc :as jdbc]
+   [pyyp.router :as router]
+   [pyyp.worker :as worker]
+   [ring.adapter.jetty :refer [run-jetty]]))
 
 (def config {:database/connection "jdbc:sqlite:resources/db.sqlite"
              :backend/application
@@ -44,15 +44,16 @@
         db-ch            (async/chan)
         version-ch       (async/chan)
         metadata-ch      (-> start-ch
-                             (worker/dataset-exists? db)
+                             (worker/dataset-preconditions
+                               (complement (partial worker/dataset-exists? db)))
                              (worker/request-dataset-metadata
                                openneuro-url openneuro-dataset-request))
         metadata-ch-mult (async/mult metadata-ch)
         version-ch       (-> (async/tap metadata-ch-mult version-ch)
-                             (worker/request-dataset-version
+                             (worker/request-dataset-snapshot
                                openneuro-url openneuro-snapshot-request))
         ]
-    (worker/save-dataset-metadata (async/tap metadata-ch-mult (db-ch)))
+    (worker/save-dataset-metadata (async/tap metadata-ch-mult db-ch) db)
     [start-ch version-ch]
     ))
 

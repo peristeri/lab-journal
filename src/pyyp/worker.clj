@@ -1,36 +1,36 @@
 (ns pyyp.worker
-  (:require [clojure.core.async :as async]
-            [taoensso.timbre :as timbre]
-            [clj-http.client :as http]
-            [cheshire.core :as cheshire]
-            [pyyp.db :as db]
-            [clojure.java.io :as io]))
+  (:require
+   [cheshire.core :as cheshire]
+   [clj-http.client :as http]
+   [clojure.core.async :as async]
+   [clojure.java.io :as io]
+   [pyyp.db :as db]
+   [taoensso.timbre :as timbre]))
 
+(defn dataset-exists? [db-conn dataset]
+  (seq (db/dataset-by-doi-version db-conn dataset)))
 
-(defn dataset-exists? [dataset-chan db-conn]
+(defn dataset-preconditions [dataset-chan dataset-conditions]
   (let [out-chan (async/chan)]
+    (timbre/info "Let's start")
     (async/go-loop [dataset (async/<! dataset-chan)]
       (if (nil? dataset)
         (do
           (timbre/info "Channels closed")
           (async/close! out-chan))
         (do
-          (let [exists? (seq (db/dataset-by-doi-version db-conn dataset))
-                result  (assoc dataset :exists? exists?)]
-            (async/>! out-chan result))
+          (when (dataset-conditions dataset)
+            (timbre/info "New dataset found " (:doi dataset))
+            (async/>! out-chan (assoc dataset :valid? true)))
           (recur (async/<! dataset-chan)))))
     out-chan))
 
 (defn- openneuro-api-call [url request-body]
   (http/post url {:content-type :application/json :body request-body}))
 
-(defn- metadata-preconditions? [dataset]
-  (nil? (:exists dataset)))
-
 (defn metadata-action [url request dataset]
   (let [metadata-request (format request (:doi dataset))
         response         (openneuro-api-call url metadata-request)]
-    (spit (io/resource (str (:doi dataset) "-" (:version dataset) "-metadata")) response)
     (assoc dataset :metadata (:body response))))
 
 (defn request-dataset-metadata
@@ -44,11 +44,12 @@
           (timbre/log "Closing channels")
           (async/close! out-chan))
         (do
-          (if (metadata-preconditions? dataset)
+          (if (:valid? dataset)
             (let [response (metadata-action
                              dataset-url
                              dataset-request
                              dataset)]
+              (timbre/info "Dataset metadata found " (:doi dataset))
               (async/>! out-chan response))
             (println "Dataset" (:doi dataset) "already exists"))
           (recur (async/<! dataset-chan)))))
@@ -75,6 +76,7 @@
   [dataset-chan db-conn]
   (async/go-loop [dataset (async/<! dataset-chan)]
     (when-let [metadata (:metadata dataset)]
+      (timbre/info "Metadata insert to DB" metadata)
       (db/insert-dataset! db-conn (extract-dataset-from-response metadata))
       (recur (async/<! dataset-chan)))))
 
