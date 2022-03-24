@@ -40,22 +40,28 @@
 (defmethod ig/init-key :backend/auth [_ config] config)
 
 (defmethod ig/init-key :scrape-dataset/worker [_ {:keys [db openneuro-url openneuro-dataset-request openneuro-snapshot-request]}]
-  (let [start-ch         (async/chan)
-        db-ch            (async/chan)
-        version-ch       (async/chan)
-        metadata-ch      (-> start-ch
-                             (worker/dataset-preconditions
-                               (complement (partial worker/dataset-exists? db)))
-                             (worker/request-dataset-metadata
-                               openneuro-url openneuro-dataset-request))
-        metadata-ch-mult (async/mult metadata-ch)
-        version-ch       (-> (async/tap metadata-ch-mult version-ch)
-                             (worker/request-dataset-snapshot
-                               openneuro-url openneuro-snapshot-request))
+  (let [start-ch               (async/chan)
+        end-ch                 (async/chan)
+        files-ch               (async/chan)
+        directories-ch         (async/chan)
+        dataset-precondition   (partial worker/dataset-preconditions db)
+        metadata-request       (partial worker/metadata-request openneuro-url openneuro-dataset-request)
+        snapshot-request       (partial worker/snapshot-request openneuro-url openneuro-snapshot-request)
+        insert-dataset-db      (partial worker/insert-dataset-db db)
+        launch-images-scapring (partial worker/launch-images-scraping files-ch directories-ch)
         ]
-    (worker/save-dataset-metadata (async/tap metadata-ch-mult db-ch) db)
-    [start-ch version-ch]
-    ))
+    (async/pipeline-blocking
+      1
+      end-ch
+      (comp launch-images-scapring
+         insert-dataset-db
+         snapshot-request
+         metadata-request
+         dataset-precondition)
+      start-ch)
+    [start-ch files-ch directories-ch end-ch]
+    )
+  )
 
 (defmethod ig/halt-key! :scrape-dataset/worker [_ channels]
   (doseq [x channels] (async/close! x)))

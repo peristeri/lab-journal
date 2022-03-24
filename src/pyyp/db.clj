@@ -24,8 +24,9 @@
 
 
 (defn- prepare-new-entry [values]
-  (-> values
-      (assoc :id (UUID/randomUUID))))
+  (if (nil? (:id values))
+    (assoc values :id (UUID/randomUUID))
+    values))
 
 
 (defn- prepare-new-account [values]
