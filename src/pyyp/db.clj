@@ -1,11 +1,13 @@
 (ns pyyp.db
-  (:require [next.jdbc :as jdbc]
-            [next.jdbc.sql :as sql]
-            [buddy.hashers :refer [encrypt]]
-            [clojure.java.io :as io]
-            [clojure.string :as str])
-  (:import (java.util UUID)))
-
+  (:require
+   [buddy.hashers :refer [encrypt]]
+   [clojure.java.io :as io]
+   [clojure.string :as str]
+   [honeysql.core :as honey]
+   [next.jdbc :as jdbc]
+   [next.jdbc.sql :as sql])
+  (:import
+   (java.util UUID)))
 
 (def roles ["researcher" "worker"])
 
@@ -22,14 +24,16 @@
 
 
 (defn- prepare-new-entry [values]
-  (-> values
-      (assoc :id (UUID/randomUUID))))
+  (if (nil? (:id values))
+    (assoc values :id (UUID/randomUUID))
+    values))
 
 
 (defn- prepare-new-account [values]
   (-> values
       (prepare-new-entry)
       (assoc :password (encrypt (:password values)))))
+
 
 (defn- prepare-new-research [values]
   (-> values
@@ -58,16 +62,33 @@
   (first (sql/find-by-keys db-conn :account {:username username :id id :is_active true})))
 
 
-(defn create-dataset! [db-conn values]
+(defn insert-dataset! [db-conn values]
   (let [data (prepare-new-entry values)]
     (sql/insert! db-conn :dataset data)
     data))
 
 
-(defn create-images! [db-conn values]
+(defn insert-images! [db-conn values]
   (doseq [value values]
     (sql/insert! db-conn :image (prepare-new-entry value))))
 
-(defn get-account-data [db-conn user-id]
-  (sql/find-by-keys db-conn :research {:leader user-id})
-  )
+
+(defn get-research-data [db-conn user-id]
+  (sql/find-by-keys db-conn :research {:leader user-id}))
+
+
+(defn dataset-by-user [user-id]
+  (-> {:select    [:*]
+       :from      [[:dataset :d]]
+       :left-join [[:permissions :p] [:= :p.dataset_id :d.id]]
+       :where     [:and [:= :p.permissions "read"]
+                   [:= :p.account_id (honey/param :username)]]}
+      (honey/format {:username user-id})))
+
+
+(defn get-dataset-by-user-id [db-conn user-id]
+  (jdbc/execute! db-conn (dataset-by-user user-id)))
+
+
+(defn dataset-by-doi-version [db-conn {:keys [doi version]}]
+  (sql/find-by-keys db-conn :dataset {:doi doi :version version}))

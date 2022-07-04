@@ -73,13 +73,13 @@
 
 (defn seed-images [db-conn dataset-id num-images]
   (let [images (for [_ (range num-images)] (fake-image dataset-id))]
-    (db/create-images! db-conn images)))
+    (db/insert-images! db-conn images)))
 
 
 (defn seed-datasets [db-conn num-set num-images]
   (dotimes [_ num-set]
     (let [data    (fake-datasets)
-          dataset (db/create-dataset! db-conn data)]
+          dataset (db/insert-dataset! db-conn data)]
       (seed-images db-conn (:id dataset) num-images))))
 
 
