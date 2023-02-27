@@ -38,9 +38,4 @@
                    (db/create-research! db request))]
     (if response
       (response/response {:status "success" :research-id (:id response)})
-      (response/bad-request {:status "failed" :reason "Invalid research"}))))
-
-
-(defn account-history [request]
-  request
-  )
+      (response/bad-request {:status "failed" :reason "Invalid request"}))))

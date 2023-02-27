@@ -25,16 +25,29 @@ create table if not exists research (
 
 create table if not exists dataset (
   id text not null primary key,
-  name text not null,
+  title text not null,
+  authors text not null,
   license text not null,
   -- The url where the original dataset description resides
   url text not null,
+  -- The dataset identifier
+  doi text not null,
   -- The version of the dataset that is currently in the lab's storage
   version text not null,
   created_at datetime default current_timestamp,
   is_active boolean default true,
   unique(url, version)
 );
+
+
+create table if not exists permissions (
+  id text not null primary key,
+  account_id text not null,
+  dataset_id text not null,
+  permissions text not null,
+  unique(account_id, dataset_id),
+  check (permissions in ("read", "denied"))
+)
 
 create table if not exists experiment (
   research_id text not null,
